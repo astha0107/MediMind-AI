@@ -1,36 +1,24 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 function Chatbot() {
   const [messages, setMessages] = useState([
     {
       sender: "ai",
-      text: "Hello! I'm MediMind AI. How can I help you today?",
+      text:
+        "👋 Hello! I'm MediMind AI. Ask me anything about symptoms, medicines, or general healthcare information.",
     },
   ]);
 
   const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
 
-  const getAIResponse = (message) => {
-    const msg = message.toLowerCase();
+  const chatEndRef = useRef(null);
 
-    if (msg.includes("fever")) {
-      return "Stay hydrated, rest well, and monitor your temperature. Consult a doctor if the fever persists.";
-    }
-
-    if (msg.includes("headache")) {
-      return "Try resting in a quiet environment and stay hydrated. Seek medical advice if headaches are severe.";
-    }
-
-    if (msg.includes("cold") || msg.includes("cough")) {
-      return "Drink warm fluids, get enough rest, and monitor your symptoms.";
-    }
-
-    if (msg.includes("medicine")) {
-      return "You can use the Medicine Search page to learn more about medicines.";
-    }
-
-    return "I'm here to assist with general healthcare guidance. Please consult a doctor for medical diagnosis.";
-  };
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -40,13 +28,28 @@ function Chatbot() {
       text: input,
     };
 
-    const aiMessage = {
-      sender: "ai",
-      text: getAIResponse(input),
-    };
+    setMessages((prev) => [...prev, userMessage]);
 
-    setMessages([...messages, userMessage, aiMessage]);
     setInput("");
+    setIsTyping(true);
+
+    // Temporary AI Response
+    setTimeout(() => {
+      const aiMessage = {
+        sender: "ai",
+        text:
+          "🤖 OpenAI integration coming next! This is a demo response from MediMind AI.",
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+      setIsTyping(false);
+    }, 1200);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSend();
+    }
   };
 
   return (
@@ -55,7 +58,7 @@ function Chatbot() {
         marginLeft: "250px",
         minHeight: "100vh",
         background: "#eef8f9",
-        padding: "50px",
+        padding: "40px",
       }}
     >
       <h1
@@ -65,44 +68,45 @@ function Chatbot() {
           marginBottom: "10px",
         }}
       >
-        MediMind AI Chatbot
+        🤖 MediMind AI Chat
       </h1>
 
       <p
         style={{
           color: "#666",
-          marginBottom: "40px",
-          fontSize: "18px",
+          marginBottom: "30px",
         }}
       >
-        Ask health-related questions for general guidance.
+        Ask health-related questions and get AI assistance.
       </p>
 
       <div
         style={{
           background: "white",
           borderRadius: "35px",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
-          height: "70vh",
+          height: "75vh",
           display: "flex",
           flexDirection: "column",
+          boxShadow:
+            "0 20px 40px rgba(0,0,0,0.08)",
+          overflow: "hidden",
         }}
       >
         {/* Messages */}
         <div
           style={{
             flex: 1,
-            overflowY: "auto",
             padding: "30px",
+            overflowY: "auto",
           }}
         >
-          {messages.map((msg, index) => (
+          {messages.map((message, index) => (
             <div
               key={index}
               style={{
                 display: "flex",
                 justifyContent:
-                  msg.sender === "user"
+                  message.sender === "user"
                     ? "flex-end"
                     : "flex-start",
                 marginBottom: "20px",
@@ -114,57 +118,69 @@ function Chatbot() {
                   padding: "15px 20px",
                   borderRadius: "20px",
                   background:
-                    msg.sender === "user"
+                    message.sender === "user"
                       ? "#14B8C4"
-                      : "#f2f2f2",
+                      : "#f3f4f6",
                   color:
-                    msg.sender === "user"
+                    message.sender === "user"
                       ? "white"
                       : "#333",
+                  lineHeight: "1.6",
                 }}
               >
-                {msg.text}
+                {message.text}
               </div>
             </div>
           ))}
+
+          {isTyping && (
+            <div
+              style={{
+                color: "#888",
+              }}
+            >
+              MediMind AI is typing...
+            </div>
+          )}
+
+          <div ref={chatEndRef}></div>
         </div>
 
         {/* Input */}
         <div
           style={{
-            display: "flex",
-            padding: "25px",
             borderTop: "1px solid #eee",
+            padding: "20px",
+            display: "flex",
+            gap: "15px",
           }}
         >
           <input
             type="text"
             placeholder="Type your message..."
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === "Enter" && handleSend()
+            onChange={(e) =>
+              setInput(e.target.value)
             }
+            onKeyDown={handleKeyDown}
             style={{
               flex: 1,
-              padding: "18px",
-              borderRadius: "18px",
-              border: "1px solid #ddd",
-              fontSize: "16px",
+              padding: "16px",
+              borderRadius: "15px",
+              border: "2px solid #14B8C4",
               outline: "none",
+              fontSize: "16px",
             }}
           />
 
           <button
             onClick={handleSend}
             style={{
-              marginLeft: "15px",
-              padding: "18px 35px",
+              padding: "16px 30px",
+              borderRadius: "15px",
               border: "none",
-              borderRadius: "18px",
               background: "#14B8C4",
               color: "white",
-              fontSize: "16px",
               fontWeight: "600",
               cursor: "pointer",
             }}

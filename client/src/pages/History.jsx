@@ -1,6 +1,37 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 function History() {
-  const historyData =
-    JSON.parse(localStorage.getItem("history")) || [];
+  const [historyData, setHistoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get(
+        "http://localhost:5000/api/analysis",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setHistoryData(response.data);
+    } catch (error) {
+      console.error(
+        "Failed to fetch history:",
+        error
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getSeverityColor = (severity) => {
     if (severity === "High") return "#ef4444";
@@ -8,16 +39,20 @@ function History() {
     return "#10b981";
   };
 
-  const clearHistory = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to clear your history?"
-      )
-    ) {
-      localStorage.removeItem("history");
-      window.location.reload();
-    }
-  };
+  if (loading) {
+    return (
+      <div
+        style={{
+          marginLeft: "250px",
+          minHeight: "100vh",
+          background: "#eef8f9",
+          padding: "50px",
+        }}
+      >
+        <h2>Loading history...</h2>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -30,49 +65,27 @@ function History() {
     >
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
+          marginBottom: "30px",
         }}
       >
-        <div>
-          <h1
-            style={{
-              color: "#14B8C4",
-              fontSize: "42px",
-              marginBottom: "10px",
-            }}
-          >
-            📜 Health History
-          </h1>
+        <h1
+          style={{
+            color: "#14B8C4",
+            fontSize: "42px",
+            marginBottom: "10px",
+          }}
+        >
+          📜 Health History
+        </h1>
 
-          <p
-            style={{
-              color: "#666",
-              fontSize: "18px",
-            }}
-          >
-            Review your previous symptom analyses.
-          </p>
-        </div>
-
-        {historyData.length > 0 && (
-          <button
-            onClick={clearHistory}
-            style={{
-              padding: "14px 22px",
-              border: "none",
-              borderRadius: "15px",
-              background: "#ef4444",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: "600",
-            }}
-          >
-            🗑 Clear History
-          </button>
-        )}
+        <p
+          style={{
+            color: "#666",
+            fontSize: "18px",
+          }}
+        >
+          Review your previous symptom analyses.
+        </p>
       </div>
 
       {historyData.length === 0 ? (
@@ -112,9 +125,9 @@ function History() {
             gap: "25px",
           }}
         >
-          {historyData.map((record, index) => (
+          {historyData.map((record) => (
             <div
-              key={index}
+              key={record._id}
               style={{
                 background: "white",
                 borderRadius: "30px",
@@ -126,7 +139,8 @@ function History() {
               <div
                 style={{
                   display: "flex",
-                  justifyContent: "space-between",
+                  justifyContent:
+                    "space-between",
                   alignItems: "center",
                   marginBottom: "20px",
                   flexWrap: "wrap",
@@ -138,14 +152,18 @@ function History() {
                     color: "#14B8C4",
                   }}
                 >
-                  📅 {record.date}
+                  📅{" "}
+                  {new Date(
+                    record.createdAt
+                  ).toLocaleDateString()}
                 </h2>
 
                 <span
                   style={{
-                    background: getSeverityColor(
-                      record.severity
-                    ),
+                    background:
+                      getSeverityColor(
+                        record.severity
+                      ),
                     color: "white",
                     padding: "8px 16px",
                     borderRadius: "20px",
@@ -162,8 +180,36 @@ function History() {
                   color: "#555",
                 }}
               >
-                <strong>🤒 Symptoms:</strong>{" "}
+                <strong>
+                  🤒 Symptoms:
+                </strong>{" "}
                 {record.symptoms.join(", ")}
+              </p>
+
+              <p
+                style={{
+                  marginBottom: "15px",
+                  color: "#555",
+                }}
+              >
+                <strong>
+                  🩺 Possible Disease:
+                </strong>{" "}
+                {record.disease}
+              </p>
+
+              <p
+                style={{
+                  marginBottom: "15px",
+                  color: "#555",
+                }}
+              >
+                <strong>
+                  💊 Medicines:
+                </strong>{" "}
+                {record.medicines?.join(
+                  ", "
+                )}
               </p>
 
               <p
@@ -172,9 +218,11 @@ function History() {
                 }}
               >
                 <strong>
-                  🩺 Possible Disease:
+                  ✅ Precautions:
                 </strong>{" "}
-                {record.disease}
+                {record.precautions?.join(
+                  ", "
+                )}
               </p>
             </div>
           ))}

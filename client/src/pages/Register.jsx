@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import axios from "axios";
 
 function Register() {
   const navigate = useNavigate();
@@ -11,6 +12,16 @@ function Register() {
     confirmPassword: "",
   });
 
+  const inputStyle = {
+    width: "100%",
+    padding: "18px",
+    borderRadius: "15px",
+    border: "1px solid #ddd",
+    marginBottom: "20px",
+    fontSize: "16px",
+    outline: "none",
+  };
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -18,11 +29,21 @@ function Register() {
     });
   };
 
-  const handleRegister = () => {
-    const { name, email, password, confirmPassword } = formData;
+  const handleRegister = async () => {
+    const {
+      name,
+      email,
+      password,
+      confirmPassword,
+    } = formData;
 
     // Validation
-    if (!name || !email || !password || !confirmPassword) {
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !confirmPassword
+    ) {
       alert("Please fill all fields");
       return;
     }
@@ -32,41 +53,37 @@ function Register() {
       return;
     }
 
-    // Get existing users
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        {
+          name,
+          email,
+          password,
+        }
+      );
 
-    // Check duplicate email
-    const userExists = users.find(
-      (user) => user.email === email
-    );
+      // Save token
+      localStorage.setItem(
+        "token",
+        response.data.token
+      );
 
-    if (userExists) {
-      alert("User already exists!");
-      return;
+      // Save current user
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(response.data.user)
+      );
+
+      alert("Registration Successful!");
+
+      navigate("/dashboard");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Registration failed"
+      );
     }
-
-    // Save user
-    users.push({
-      name,
-      email,
-      password,
-    });
-
-    localStorage.setItem("users", JSON.stringify(users));
-
-    alert("Registration Successful!");
-
-    navigate("/");
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "18px",
-    borderRadius: "15px",
-    border: "1px solid #ddd",
-    marginBottom: "20px",
-    fontSize: "16px",
-    outline: "none",
   };
 
   return (

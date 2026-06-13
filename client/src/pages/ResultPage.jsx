@@ -1,4 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import axios from "axios";
 
 function ResultPage() {
   const location = useLocation();
@@ -18,6 +20,52 @@ function ResultPage() {
       : severity === "Medium"
       ? "#F59E0B"
       : "#14B8C4";
+
+  // Save analysis to MongoDB
+  useEffect(() => {
+    const saveAnalysis = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          console.log("No token found");
+          return;
+        }
+
+        await axios.post(
+          "http://localhost:5000/api/analysis",
+          {
+            symptoms,
+            disease,
+            precautions,
+            medicines,
+            severity,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log("Analysis saved successfully");
+      } catch (error) {
+        console.log("FULL ERROR:", error);
+
+        console.log(
+          "Response:",
+          error.response?.data
+        );
+
+        console.log(
+          "Status:",
+          error.response?.status
+        );
+      }
+    };
+
+    saveAnalysis();
+  }, []);
 
   return (
     <div

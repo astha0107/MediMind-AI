@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import axios from "axios";
 
 function Login() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ function Login() {
     });
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const { email, password } = formData;
 
     // Validation
@@ -35,30 +36,38 @@ function Login() {
       return;
     }
 
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email,
+          password,
+        }
+      );
 
-    // Find matching user
-    const user = users.find(
-      (u) =>
-        u.email === email &&
-        u.password === password
-    );
+      // Save JWT token
+      localStorage.setItem(
+        "token",
+        response.data.token
+      );
 
-    if (!user) {
-      alert("Invalid email or password");
-      return;
+      // Save logged-in user
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(response.data.user)
+      );
+
+      alert(
+        `Welcome ${response.data.user.name}!`
+      );
+
+      navigate("/dashboard");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Login failed"
+      );
     }
-
-    // Save current logged-in user
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify(user)
-    );
-
-    alert(`Welcome ${user.name}!`);
-
-    navigate("/dashboard");
   };
 
   return (
